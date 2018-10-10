@@ -1,1 +1,1 @@
-/usr/local/bin/GoWebService > /dev/null 2> /dev/null < /dev/null &
+$GOPATH/bin/GoWebService > /dev/null 2> /dev/null < /dev/null &
