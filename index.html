@@ -48,6 +48,12 @@
         th {
             white-space: nowrap;
         }
+
+        .buttonNumber, .buttonAction, .buttonClear {
+            height: 2em;
+            width: 2em;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -64,15 +70,38 @@
             </th>
             <td>
                 <div id="calculator">
-                    <input id="a" type="text" name="a" size="8" /><br/>
-                    <select id="operation" name="operation">
-                        <option value="add" selected>+</option>
-                        <option value="subtract">-</option>
-                        <option value="multiply">*</option>
-                        <option value="divide">/</option>
-                    </select><br/>
-                    <input id="b" type="text" name="b" size="8" /><br/>
-                    <button id="calculate" name="calculate">Calculate</button><br/>
+                    <table>
+                        <tr>
+                            <td colspan="4"><input type="text" id="screen" readonly width="4em"/></td>
+                        </tr>
+                        <tr>
+                            <td><input class="buttonClear" type="button" value="AC" /></td>
+                        </tr>
+                        <tr>
+                            <td><input class="buttonNumber" type="button" value="7" /></td>
+                            <td><input class="buttonNumber" type="button" value="8" /></td>
+                            <td><input class="buttonNumber" type="button" value="9" /></td>
+                            <td><input class="buttonAction" type="button" value="/" operation="divide" /></td>
+                        </tr>
+                        <tr>
+                            <td><input class="buttonNumber" type="button" value="4" /></td>
+                            <td><input class="buttonNumber" type="button" value="5" /></td>
+                            <td><input class="buttonNumber" type="button" value="6" /></td>
+                            <td><input class="buttonAction" type="button" value="*" operation="multiply" /></td>
+                        </tr>
+                        <tr>
+                            <td><input class="buttonNumber" type="button" value="1" /></td>
+                            <td><input class="buttonNumber" type="button" value="2" /></td>
+                            <td><input class="buttonNumber" type="button" value="3" /></td>
+                            <td><input class="buttonAction" type="button" value="-" operation="subtract" /></td>
+                        </tr>
+                        <tr>
+                            <td><input class="buttonNumber" type="button" value="0" /></td>
+                            <td><input class="buttonNumber" type="button" value="." /></td>
+                            <td><input class="buttonAction" type="button" value="=" operation="undefined" /></td>
+                            <td><input class="buttonAction" type="button" value="+" operation="add" /></td>
+                        </tr>
+                    </table>
                 </div>
             </td>
         </tr>
@@ -84,26 +113,83 @@
     </table>
 </div>
 <script>
-    var aInput = document.getElementById("a");
-    var bInput = document.getElementById("b");
-    var operationSelect = document.getElementById("operation");
-    var calculateButton = document.getElementById("calculate");
-    var resultInput = document.getElementById("result");
-    calculateButton.addEventListener("click", function() {
-        var operation = operationSelect.options[operationSelect.selectedIndex].value;
-        var a = aInput.value;
-        var b = bInput.value;
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', encodeURI('/' + operation + '?a=' + a + '&b=' + b));
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                resultInput.innerHTML = xhr.responseText;
+    HTMLCollection.prototype.forEach = Array.prototype.forEach;
+    var lastResult = '';
+    var o = '';
+    var a = '0';
+    var b = '';
+    var action = 'undefined';
+
+    cleanInput = function() {
+        a = a.replace(/^0+(?=\d)/, '');
+        b = b.replace(/^0+(?=\d)/, '');
+    }
+
+    clearInput = function() {
+        lastResult = '';
+        o = '';
+        a = '0';
+        b = '';
+        action = 'undefined';
+    }
+
+    updateScreen = function() {
+        console.log('lastResult:', lastResult, 'a:', a, 'o:', o, 'b:', b);
+        document.getElementById('screen').value = ((lastResult == '') ? [a, o, b] : [lastResult]).join(" ").trim() + ' ';
+    }
+    updateScreen();
+
+    var errorMessage = document.getElementById("result");
+
+    document.getElementsByClassName('buttonNumber').forEach(function(e) {
+        e.addEventListener('click', function() {
+            lastResult = '';
+            (o == '') ? a += '' + this.value : b += '' + this.value;
+            cleanInput();
+            updateScreen();
+        })
+    });
+    document.getElementsByClassName('buttonClear').forEach(function(e) {
+        e.addEventListener('click', function() {
+            clearInput();
+            updateScreen();
+        });
+    });
+    document.getElementsByClassName('buttonAction').forEach(function(e) {
+        e.addEventListener('click', function() {
+            if (lastResult != '') {
+                a = lastResult;
+                lastResult = '';
             }
-            else {
-                resultInput.innerHTML = '<span class="error">' + xhr.responseText + '<span>';
+            var nextO = this.value;
+            var nextAction = this.getAttribute('operation');
+            if (o == '' && nextO != '=') {
+                o = nextO;
+                action = nextAction;
+                updateScreen();
+            } else {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', encodeURI('/' + action + '?a=' + a + '&b=' + b));
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        clearInput();
+                        if (nextO != '=') {
+                            o = nextO;
+                            a = xhr.responseText.trim();
+                        } else {
+                            lastResult = xhr.responseText.trim();
+                        }
+                        b = '';
+                        action = nextAction;
+                        errorMessage.innerHTML = '';
+                        updateScreen();
+                    } else {
+                        errorMessage.innerHTML = '<span class="error">' + xhr.responseText + '<span>';
+                    }
+                };
+                xhr.send();
             }
-        };
-        xhr.send();
+        });
     });
 </script>
 </body>

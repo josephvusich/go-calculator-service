@@ -63,6 +63,10 @@ func Divide(res http.ResponseWriter, req *http.Request) {
 }
 
 func UI(res http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/" {
+		RespondError(res, "no operation selected")
+		return
+	}
 	RespondHTML(res, "index.html")
 }
 
