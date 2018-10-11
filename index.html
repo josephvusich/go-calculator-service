@@ -131,6 +131,7 @@
         a = '0';
         b = '';
         action = 'undefined';
+        errorMessage.innerHTML = '';
     }
 
     updateScreen = function() {
@@ -163,6 +164,11 @@
             }
             var nextO = this.value;
             var nextAction = this.getAttribute('operation');
+            if (nextO == '=' && o == '') {
+                updateScreen();
+                return;
+            }
+
             if (o == '' && nextO != '=') {
                 o = nextO;
                 action = nextAction;
@@ -171,8 +177,8 @@
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', encodeURI('/' + action + '?a=' + a + '&b=' + b));
                 xhr.onload = function() {
+                    clearInput();
                     if (xhr.status === 200) {
-                        clearInput();
                         if (nextO != '=') {
                             o = nextO;
                             a = xhr.responseText.trim();
@@ -181,11 +187,10 @@
                         }
                         b = '';
                         action = nextAction;
-                        errorMessage.innerHTML = '';
-                        updateScreen();
                     } else {
                         errorMessage.innerHTML = '<span class="error">' + xhr.responseText + '<span>';
                     }
+                    updateScreen();
                 };
                 xhr.send();
             }

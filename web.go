@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -69,7 +70,7 @@ func Divide(res http.ResponseWriter, req *http.Request) {
 
 func UI(res http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != "/" {
-		RespondError(res, "no operation selected")
+		RespondError(res, fmt.Sprintf("invalid operation: '%s'", strings.TrimPrefix(req.URL.Path, "/")))
 		return
 	}
 	RespondHTML(res, "index.html")
