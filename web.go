@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,13 +11,17 @@ import (
 )
 
 func main() {
+	var port int
+	flag.IntVar(&port, "port", 8024, "port to listen on")
+	flag.Parse()
+
 	http.HandleFunc("/", UI)
 	http.HandleFunc("/add", Add)
 	http.HandleFunc("/subtract", Subtract)
 	http.HandleFunc("/multiply", Multiply)
 	http.HandleFunc("/divide", Divide)
-	fmt.Println("listening...")
-	err := http.ListenAndServe(":8024", nil)
+	fmt.Println("listening on port", port, "...")
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
 		panic(err)
 	}
